@@ -1,56 +1,54 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
+public class Cell : MonoBehaviour, IPointerClickHandler
 {
-    public GameObject selectMesh;
-    public GameObject focusMesh;
-    public Material originalMaterial;
-    public Material highlightMaterial;
+    [SerializeField] private GameObject highlightEffect;
+    private Material _originalMaterial;
+    private Renderer _renderer;
 
-    public delegate void PointerClickEvent(Cell clickedCell);
-    public event PointerClickEvent OnPointerClickEvent;
-
-    private void Start()
-    {
-        originalMaterial = GetComponent<Renderer>().material;
-        ResetSelect();
-
-        if (focusMesh != null)
-        {
-            focusMesh.SetActive(false);
-        }
-    }
     public Unit Unit { get; set; }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    private void Awake()
     {
-        GetComponent<Renderer>().material = highlightMaterial;
-        focusMesh.SetActive(true);
+        _renderer = GetComponent<Renderer>();
+        _originalMaterial = _renderer.material;
+
+        if (highlightEffect != null)
+            highlightEffect.SetActive(false);
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    public void SetHighlight(Material highlightMaterial)
     {
-        GetComponent<Renderer>().material = originalMaterial;
-        focusMesh.SetActive(false);
+        if (_renderer != null && highlightMaterial != null)
+        {
+            _renderer.material = highlightMaterial;
+        }
+
+        if (highlightEffect != null)
+        {
+            highlightEffect.SetActive(true);
+        }
+    }
+
+    public void ResetHighlight()
+    {
+        if (_renderer != null)
+        {
+            _renderer.material = _originalMaterial;
+        }
+
+        if (highlightEffect != null)
+        {
+            highlightEffect.SetActive(false);
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        OnPointerClickEvent?.Invoke(this);
-    }
-
-    public void SetSelect(Material selectMaterial)
-    {
-        selectMesh.SetActive(true);
-        GetComponent<Renderer>().material = selectMaterial;
-    }
-    public void ResetSelect()
-    {
-        selectMesh.SetActive(false);
-        GetComponent<Renderer>().material = originalMaterial;
+        if (UnitSelectionManager.Instance.SelectedUnit != null)
+        {
+            UnitSelectionManager.Instance.MoveSelectedUnit(this);
+        }
     }
 }

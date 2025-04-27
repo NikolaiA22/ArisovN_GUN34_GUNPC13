@@ -59,5 +59,4 @@ public class InputManager : MonoBehaviour
      {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
      }
-
 }

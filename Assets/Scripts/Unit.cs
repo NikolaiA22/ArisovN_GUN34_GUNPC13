@@ -1,25 +1,27 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using System;
+using System.Collections;
 
+[RequireComponent(typeof(Renderer))]
 [RequireComponent(typeof(Collider))]
-public class Unit : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
+public class Unit : MonoBehaviour, IPointerClickHandler
 {
-    public event Action<Unit> OnMoveEndCallback;
+    [Header("Visual Settings")]
+    [SerializeField] private Material selectedMaterial;
+    [SerializeField] private Material hoverMaterial;
+    [SerializeField] private GameObject selectionIndicator;
+
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float rotationSpeed = 10f;
 
-    [Header("Visual Feedback")]
-    [SerializeField] private GameObject selectionVisual;
-    [SerializeField] private Material highlightMaterial;
-
-    private Cell _currentCell;
-    private bool _isMoving = false;
-    private Vector3 _targetPosition;
-    private Material _originalMaterial;
     private Renderer _renderer;
+    private Material _originalMaterial;
+    private Cell _currentCell;
+    private bool _isSelected;
+    private Coroutine _moveCoroutine;
 
-    public Cell Cell
+    public Cell CurrentCell
     {
         get => _currentCell;
         set
@@ -34,93 +36,151 @@ public class Unit : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, I
         }
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    private void Awake()
     {
-        ApplyHighlight(true);
-        Cell?.OnPointerEnter(eventData);
+        _renderer = GetComponent<Renderer>();
+        _originalMaterial = _renderer.material;
+
+        if (selectionIndicator != null)
+            selectionIndicator.SetActive(false);
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    private void Start()
     {
-        ApplyHighlight(false);
-        Cell?.OnPointerExit(eventData);
+        FindAndAssignCell();
+    }
+
+    private void FindAndAssignCell()
+    {
+        if (CellManager.Instance == null || CellManager.Instance.AllCells == null)
+        {
+            Debug.LogWarning("CellManager not initialized yet");
+            return;
+        }
+
+        Cell closestCell = null;
+        float minDistance = float.MaxValue;
+
+        foreach (var cell in CellManager.Instance.AllCells)
+        {
+            if (cell == null) continue;
+
+            float distance = Vector3.Distance(transform.position, cell.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestCell = cell;
+            }
+        }
+
+        if (closestCell != null && closestCell.Unit == null)
+        {
+            CurrentCell = closestCell;
+            transform.position = closestCell.transform.position;
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        Cell?.OnPointerClick(eventData);
-    }
-    private void ApplyHighlight(bool state)
-    {
-        if (_renderer == null) return;
-
-        _renderer.material = state && highlightMaterial != null
-            ? highlightMaterial
-            : _originalMaterial;
-
-        if (selectionVisual != null)
-            selectionVisual.SetActive(state);
-    }
-
-
-    public void Move(Cell targetCell)
-    {
-        if (_isMoving || targetCell == null || targetCell == Cell)
-            return;
-
-        if (targetCell.Unit != null)
+        if (_isSelected)
         {
-            Debug.LogWarning($"Target cell {targetCell.name} is occupied!");
+            Deselect();
+        }
+        else
+        {
+            Select();
+        }
+    }
+
+    public void Select()
+    {
+        if (_currentCell == null)
+        {
+            Debug.LogWarning("Cannot select - no cell assigned");
             return;
         }
 
-        _isMoving = true;
-        _targetPosition = targetCell.transform.position;
-
-        var previousCell = Cell;
-        Cell = null;
-
-        StartCoroutine(MoveCoroutine(previousCell, targetCell));
+        _isSelected = true;
+        ApplySelectionVisual(true);
+        CellHighlighter.Instance.HighlightMovementCells(_currentCell);
+        UnitSelectionManager.Instance.SelectUnit(this);
     }
 
-    private System.Collections.IEnumerator MoveCoroutine(Cell fromCell, Cell toCell)
+    public void Deselect()
     {
+        _isSelected = false;
+        ApplySelectionVisual(false);
+        CellHighlighter.Instance.ResetHighlight();
+    }
+
+    public void MoveToCell(Cell targetCell)
+    {
+        if (_moveCoroutine != null)
+            StopCoroutine(_moveCoroutine);
+
+        _moveCoroutine = StartCoroutine(MoveCoroutine(targetCell));
+    }
+
+    private IEnumerator MoveCoroutine(Cell targetCell)
+    {
+        if (targetCell == null || targetCell.Unit != null)
+            yield break;
+
         Vector3 startPosition = transform.position;
-        float journeyLength = Vector3.Distance(startPosition, _targetPosition);
-        float startTime = Time.time;
+        Quaternion startRotation = transform.rotation;
+        Quaternion targetRotation = Quaternion.LookRotation(targetCell.transform.position - startPosition);
 
-        while (transform.position != _targetPosition)
+        float distance = Vector3.Distance(startPosition, targetCell.transform.position);
+        float duration = distance / moveSpeed;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
         {
-            float distanceCovered = (Time.time - startTime) * moveSpeed;
-            float fractionOfJourney = distanceCovered / journeyLength;
-
-            transform.position = Vector3.Lerp(startPosition, _targetPosition, fractionOfJourney);
+            float progress = elapsed / duration;
+            transform.position = Vector3.Lerp(startPosition, targetCell.transform.position, progress);
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, progress);
+            elapsed += Time.deltaTime;
             yield return null;
         }
 
-        transform.position = _targetPosition;
-        Cell = toCell;
-        _isMoving = false;
-
-        OnMoveEndCallback?.Invoke(this);
+        transform.position = targetCell.transform.position;
+        transform.rotation = targetRotation;
+        CurrentCell = targetCell;
+        Deselect();
     }
-    private void Update()
+
+    private void ApplySelectionVisual(bool state)
     {
-        if (Input.GetMouseButtonDown(0))
+        if (_renderer != null)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
-            {
-                OnPointerClick(null);
-            }
+            _renderer.material = state ? selectedMaterial : _originalMaterial;
+        }
+
+        if (selectionIndicator != null)
+        {
+            selectionIndicator.SetActive(state);
         }
     }
-    private void OnMouseEnter() => Debug.Log("Mouse ENTER unit");
-    private void OnMouseExit() => Debug.Log("Mouse EXIT unit");
+
+    private void OnMouseEnter()
+    {
+        if (!_isSelected && _renderer != null && hoverMaterial != null)
+        {
+            _renderer.material = hoverMaterial;
+        }
+    }
+
+    private void OnMouseExit()
+    {
+        if (!_isSelected && _renderer != null)
+        {
+            _renderer.material = _originalMaterial;
+        }
+    }
 
     private void OnDestroy()
     {
-        if (Cell != null)
-            Cell.Unit = null;
+        if (_currentCell != null)
+            _currentCell.Unit = null;
     }
 }

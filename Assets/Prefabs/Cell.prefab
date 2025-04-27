@@ -226,10 +226,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05412b1d4b08aaa48b609b0a555f5da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  selectMesh: {fileID: 2243842473113895358}
-  focusMesh: {fileID: 1736695840496576228}
-  originalMaterial: {fileID: 2100000, guid: 7605c298b4850d946a31c511289cb029, type: 2}
-  highlightMaterial: {fileID: 2100000, guid: 692191f4411f9e747ae46a8ad866776b, type: 2}
 --- !u!1 &2243842473113895358
 GameObject:
   m_ObjectHideFlags: 0

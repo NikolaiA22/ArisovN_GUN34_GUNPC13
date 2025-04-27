@@ -63,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 692191f4411f9e747ae46a8ad866776b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -104,10 +104,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
+  m_Radius: 0.5231994
+  m_Height: 2.5971165
   m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+  m_Center: {x: 0.000000074505806, y: -0.08925781, z: -0.023199357}
 --- !u!114 &6913302694437060556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,6 +120,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 634d53c5676e804428fe0e123f0b4bd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectedMaterial: {fileID: 2100000, guid: 7605c298b4850d946a31c511289cb029, type: 2}
+  hoverMaterial: {fileID: 2100000, guid: 692191f4411f9e747ae46a8ad866776b, type: 2}
+  selectionIndicator: {fileID: 0}
   moveSpeed: 5
-  selectionVisual: {fileID: 4923781618384942480}
-  highlightMaterial: {fileID: 2100000, guid: 7605c298b4850d946a31c511289cb029, type: 2}
+  rotationSpeed: 10
