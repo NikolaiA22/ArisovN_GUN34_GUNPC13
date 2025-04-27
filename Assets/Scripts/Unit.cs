@@ -1,57 +1,59 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections;
 
 public class Unit : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
 {
-    public Cell Cell { get; set; }
-    public event System.Action OnMoveEndCallback;
+    private Cell currentCell;
 
-    [SerializeField] private float moveSpeed = 5f;
+    public delegate void MoveEndCallBack();
+    public event MoveEndCallBack OnMoveEndCallback;
 
-    private bool isMoving;
+    public float moveSpeed = 5f;
 
-    public void OnPointerEnter(PointerEventData eventData)
+    public void Move(Cell targetCell)
     {
-        Cell?.OnPointerEnter(eventData);
+        if (targetCell == null) return;
+
+        currentCell = targetCell;
+        StartCoroutine(MoveToCell(targetCell.transform.position));
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    private IEnumerator MoveToCell(Vector3 targetPosition)
+    { 
+        Vector3 startPosition = transform.position;
+        float distance = Vector3.Distance(startPosition, targetPosition);
+        float duration = distance / moveSpeed;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            transform.position = Vector3.Lerp(startPosition, targetPosition, (elapsedTime / duration));
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = targetPosition;
+
+        OnMoveEndCallback?.Invoke();
+    }
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        Cell?.OnPointerClick(eventData);
+        currentCell?.OnPointerEnter(eventData);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Cell?.OnPointerExit(eventData);
+        currentCell?.OnPointerExit(eventData);
     }
 
-    public void Move(Cell targetCell)
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (isMoving) return;
-
-        isMoving = true;
-        StartCoroutine(MoveCoroutine(targetCell));
+        currentCell?.OnPointerClick(eventData);
     }
 
-    private System.Collections.IEnumerator MoveCoroutine(Cell targetCell)
+    public void SetCurrentCell(Cell cell)
     {
-        Vector3 startPos = transform.position;
-        Vector3 endPos = targetCell.transform.position + Vector3.up * 0.5f;
-        float journeyLength = Vector3.Distance(startPos, endPos);
-        float startTime = Time.time;
-
-        while (transform.position != endPos)
-        {
-            float distCovered = (Time.time - startTime) * moveSpeed;
-            float fractionOfJourney = distCovered / journeyLength;
-            transform.position = Vector3.Lerp(startPos, endPos, fractionOfJourney);
-            yield return null;
-        }
-
-        if (Cell != null) Cell.Unit = null;
-        Cell = targetCell;
-        Cell.Unit = this;
-        isMoving = false;
-        OnMoveEndCallback?.Invoke();
+        currentCell = cell;
     }
 }

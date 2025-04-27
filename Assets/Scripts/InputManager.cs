@@ -1,52 +1,63 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class InputManager : MonoBehaviour
 {
-    [SerializeField] private GameObject restartPanel;
-    [SerializeField] private Image restartProgress;
-    [SerializeField] private float restartHoldTime = 2f;
-
-    private Controls controls;
-    private float restartHoldTimer;
-    private bool isRestarting;
+    public GameControls controls;
+    public Image progressBar;
+    private float fillAmount = 0f;
+    private bool isFilling = false;
 
     private void Awake()
     {
-        controls = new Controls();
-        controls.Game.Restart.performed += ctx => StartRestart();
-        controls.Game.Restart.canceled += ctx => StopRestart();
+        controls = new GameControls();
+        controls.Game.Restart.performed += ctx => StartFilling();
+        controls.Game.Restart.canceled += ctx => StopFilling();
     }
 
-    private void OnEnable() => controls.Enable();
-    private void OnDisable() => controls.Disable();
+    private void OnEnable()
+    {
+        controls.Enable();
+    }
+
+    private void OnDisable()
+    {
+        controls.Disable();
+    }
 
     private void Update()
     {
-        if (isRestarting)
+        if (isFilling)
         {
-            restartHoldTimer += Time.deltaTime;
-            restartProgress.fillAmount = restartHoldTimer / restartHoldTime;
+            fillAmount += Time.deltaTime;
+            progressBar.fillAmount = fillAmount;
 
-            if (restartHoldTimer >= restartHoldTime)
+            if (fillAmount >= 1f)
             {
-                UnityEngine.SceneManagement.SceneManager.LoadScene(
-                    UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+                RestartScene();
             }
         }
     }
 
-    private void StartRestart()
+    private void StartFilling()
     {
-        isRestarting = true;
-        restartPanel.SetActive(true);
-        restartHoldTimer = 0f;
+        isFilling = true;
+        fillAmount = 0f;
+        progressBar.fillAmount = fillAmount;
+        progressBar.gameObject.SetActive(true);
     }
 
-    private void StopRestart()
-    {
-        isRestarting = false;
-        restartPanel.SetActive(false);
-    }
+     private void StopFilling()
+     {
+        isFilling = false;
+        progressBar.gameObject.SetActive(false);
+     }
+
+     private void RestartScene()
+     {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+     }
+
 }

@@ -1,14 +1,14 @@
 {
-    "name": "Controls",
+    "name": "GameControls",
     "maps": [
         {
             "name": "Game",
-            "id": "bfa83d41-f043-4e53-9996-2f4e87c64a82",
+            "id": "196658f4-163b-404d-9704-1caadc40f259",
             "actions": [
                 {
                     "name": "Restart",
                     "type": "Button",
-                    "id": "870f7fb5-409a-4c42-ba97-e0e97dd0ac0d",
+                    "id": "8eace111-1966-4f13-aace-a756fce91934",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -18,7 +18,7 @@
             "bindings": [
                 {
                     "name": "",
-                    "id": "3a07bc63-4808-4c83-9259-5efe7dd70a74",
+                    "id": "07b8649f-e5f7-4e3e-8d06-aaebd2dc896f",
                     "path": "<Keyboard>/tab",
                     "interactions": "",
                     "processors": "",
