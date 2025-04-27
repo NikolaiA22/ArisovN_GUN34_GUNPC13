@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3fd5ff75755d36489a082d1550c9ca4, type: 3}
+  m_Name: CellPaletteSettings
+  m_EditorClassIdentifier: 
+  selectedMaterial: {fileID: 2100000, guid: 7605c298b4850d946a31c511289cb029, type: 2}
+  moveableMaterial: {fileID: 2100000, guid: 1f7193eb7db4dba49a273508b4240841, type: 2}
+  attackableMaterial: {fileID: 2100000, guid: 234be59e8af5f08499681761c71c1e9b, type: 2}
+  moveAndAttackMaterial: {fileID: 2100000, guid: a5ba4228c0cafa949877d4bb7dc99138, type: 2}

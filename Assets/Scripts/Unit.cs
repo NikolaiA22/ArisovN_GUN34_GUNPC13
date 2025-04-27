@@ -1,59 +1,126 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using System.Collections;
+using System;
 
+[RequireComponent(typeof(Collider))]
 public class Unit : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
 {
-    private Cell currentCell;
+    public event Action<Unit> OnMoveEndCallback;
+    [Header("Movement Settings")]
+    [SerializeField] private float moveSpeed = 5f;
 
-    public delegate void MoveEndCallBack();
-    public event MoveEndCallBack OnMoveEndCallback;
+    [Header("Visual Feedback")]
+    [SerializeField] private GameObject selectionVisual;
+    [SerializeField] private Material highlightMaterial;
 
-    public float moveSpeed = 5f;
+    private Cell _currentCell;
+    private bool _isMoving = false;
+    private Vector3 _targetPosition;
+    private Material _originalMaterial;
+    private Renderer _renderer;
 
-    public void Move(Cell targetCell)
+    public Cell Cell
     {
-        if (targetCell == null) return;
-
-        currentCell = targetCell;
-        StartCoroutine(MoveToCell(targetCell.transform.position));
-    }
-
-    private IEnumerator MoveToCell(Vector3 targetPosition)
-    { 
-        Vector3 startPosition = transform.position;
-        float distance = Vector3.Distance(startPosition, targetPosition);
-        float duration = distance / moveSpeed;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < duration)
+        get => _currentCell;
+        set
         {
-            transform.position = Vector3.Lerp(startPosition, targetPosition, (elapsedTime / duration));
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            if (_currentCell != null)
+                _currentCell.Unit = null;
+
+            _currentCell = value;
+
+            if (_currentCell != null)
+                _currentCell.Unit = this;
         }
-
-        transform.position = targetPosition;
-
-        OnMoveEndCallback?.Invoke();
     }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
-        currentCell?.OnPointerEnter(eventData);
+        ApplyHighlight(true);
+        Cell?.OnPointerEnter(eventData);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        currentCell?.OnPointerExit(eventData);
+        ApplyHighlight(false);
+        Cell?.OnPointerExit(eventData);
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        currentCell?.OnPointerClick(eventData);
+        Cell?.OnPointerClick(eventData);
+    }
+    private void ApplyHighlight(bool state)
+    {
+        if (_renderer == null) return;
+
+        _renderer.material = state && highlightMaterial != null
+            ? highlightMaterial
+            : _originalMaterial;
+
+        if (selectionVisual != null)
+            selectionVisual.SetActive(state);
     }
 
-    public void SetCurrentCell(Cell cell)
+
+    public void Move(Cell targetCell)
     {
-        currentCell = cell;
+        if (_isMoving || targetCell == null || targetCell == Cell)
+            return;
+
+        if (targetCell.Unit != null)
+        {
+            Debug.LogWarning($"Target cell {targetCell.name} is occupied!");
+            return;
+        }
+
+        _isMoving = true;
+        _targetPosition = targetCell.transform.position;
+
+        var previousCell = Cell;
+        Cell = null;
+
+        StartCoroutine(MoveCoroutine(previousCell, targetCell));
+    }
+
+    private System.Collections.IEnumerator MoveCoroutine(Cell fromCell, Cell toCell)
+    {
+        Vector3 startPosition = transform.position;
+        float journeyLength = Vector3.Distance(startPosition, _targetPosition);
+        float startTime = Time.time;
+
+        while (transform.position != _targetPosition)
+        {
+            float distanceCovered = (Time.time - startTime) * moveSpeed;
+            float fractionOfJourney = distanceCovered / journeyLength;
+
+            transform.position = Vector3.Lerp(startPosition, _targetPosition, fractionOfJourney);
+            yield return null;
+        }
+
+        transform.position = _targetPosition;
+        Cell = toCell;
+        _isMoving = false;
+
+        OnMoveEndCallback?.Invoke(this);
+    }
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
+            {
+                OnPointerClick(null);
+            }
+        }
+    }
+    private void OnMouseEnter() => Debug.Log("Mouse ENTER unit");
+    private void OnMouseExit() => Debug.Log("Mouse EXIT unit");
+
+    private void OnDestroy()
+    {
+        if (Cell != null)
+            Cell.Unit = null;
     }
 }

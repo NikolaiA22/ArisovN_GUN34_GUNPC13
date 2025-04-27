@@ -9,6 +9,6 @@ public class GameInstaller : MonoInstaller
     {
         Container.Bind<GameControls>().FromInstance(gameControls).AsSingle();
 
-        Container.Bind<GameControl>().AsTransient();
+        //Container.Bind<GameControls>().AsTransient();
     }
 }

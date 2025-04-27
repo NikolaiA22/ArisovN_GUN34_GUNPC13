@@ -227,7 +227,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectMesh: {fileID: 2243842473113895358}
-  originalMaterial: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  focusMesh: {fileID: 1736695840496576228}
+  originalMaterial: {fileID: 2100000, guid: 7605c298b4850d946a31c511289cb029, type: 2}
   highlightMaterial: {fileID: 2100000, guid: 692191f4411f9e747ae46a8ad866776b, type: 2}
 --- !u!1 &2243842473113895358
 GameObject:

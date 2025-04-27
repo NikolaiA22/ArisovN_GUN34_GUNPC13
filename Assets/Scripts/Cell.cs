@@ -6,34 +6,8 @@ using UnityEngine.EventSystems;
 
 public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
 {
-    //[SerializeField]
-    //private float _speed = 2f;
-    //public Cell cell { get; set; }
-
-    //public event Action OnMoveEndCallback;
-
-    //private void Update()
-    //{
-    //    if (Input.GetKey(KeyCode.Space))
-    //    { 
-    //        //to do jump
-    //    }
-
-    //    var axis = Input.GetAxis("Horizontal");
-    //    if (axis > 0f)
-    //    { 
-
-    //    }
-    //}
-
-    //public void Move(Cell cell)
-    //{
-    //    StartCoroutine(OnMove(cell));
-    //}
-
-
-
     public GameObject selectMesh;
+    public GameObject focusMesh;
     public Material originalMaterial;
     public Material highlightMaterial;
 
@@ -44,16 +18,24 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, I
     {
         originalMaterial = GetComponent<Renderer>().material;
         ResetSelect();
+
+        if (focusMesh != null)
+        {
+            focusMesh.SetActive(false);
+        }
     }
+    public Unit Unit { get; set; }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         GetComponent<Renderer>().material = highlightMaterial;
+        focusMesh.SetActive(true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         GetComponent<Renderer>().material = originalMaterial;
+        focusMesh.SetActive(false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -66,7 +48,6 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, I
         selectMesh.SetActive(true);
         GetComponent<Renderer>().material = selectMaterial;
     }
-
     public void ResetSelect()
     {
         selectMesh.SetActive(false);
